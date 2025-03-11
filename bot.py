@@ -76,10 +76,10 @@ class RoleSelect(discord.ui.Select):
 
         if removed_roles:  # Vérifie si des rôles ont été supprimés
             await interaction.response.send_message(
-                f"🔴 Rôles supprimés : {', '.join(removed_roles)} pour {self.member.mention}.", ephemeral=True  # Envoie un message de confirmation
+                f"🔴 Rôles supprimés : {', '.join(removed_roles)} pour {self.member.mention}."#, ephemeral=True)  # Envoie un message de confirmation et ephemeral permet de rendre ce message privée
             )
         else:
-            await interaction.response.send_message("Aucun rôle n'a été retiré.", ephemeral=True)  # Envoie un message si aucun rôle n'a été supprimé
+            await interaction.response.send_message("Aucun rôle n'a été retiré.")#, ephemeral=True)  # Envoie un message si aucun rôle n'a été supprimé
 
 class RoleSelectView(discord.ui.View):
     def __init__(self, member: discord.Member):
@@ -90,15 +90,15 @@ class RoleSelectView(discord.ui.View):
 @app_commands.describe(member="Membre du serveur")
 async def roleban(interaction: discord.Interaction, member: discord.Member):  # Commande slash pour retirer des rôles
     if member == interaction.user:  # Vérifie si l'utilisateur tente de se retirer ses propres rôles
-        await interaction.response.send_message("❌ Vous ne pouvez pas vous retirer des rôles vous-même.", ephemeral=True)
+        await interaction.response.send_message("❌ Vous ne pouvez pas vous retirer des rôles vous-même.")#, ephemeral=True)
         return
 
     if member == interaction.guild.owner:  # Vérifie si la cible est le propriétaire du serveur
-        await interaction.response.send_message("❌ Impossible de modifier les rôles du propriétaire du serveur.", ephemeral=True)
+        await interaction.response.send_message("❌ Impossible de modifier les rôles du propriétaire du serveur.")#, ephemeral=True)
         return
 
     view = RoleSelectView(member)  # Crée une instance de la vue RoleSelectView
-    await interaction.response.send_message(f"⚠️ Sélectionnez les rôles à retirer pour {member.mention} :", view=view, ephemeral=True)  # Envoie le menu déroulant
+    await interaction.response.send_message(f"⚠️ Sélectionnez les rôles à retirer pour {member.mention} :", view=view)#, ephemeral=True)  Envoie le menu déroulant
 
 # 🚨 **Automatisation : Surveiller les rôles des membres**
 @bot.event
