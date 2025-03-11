@@ -3,10 +3,51 @@
 Ce bot Discord a vu le jour pour pouvoir gérer principalement les rôles des utilisateurs compliqués.
 
 ## 📜 Sommaire
+- [Commande Discord](#🧑‍💻-commandes-discord)
 - [Prérequis](#⚙️-prérequis)
 - [Création du Bot](#🤖-création-du-bot)
 - [.env](#🔒-env)
 - [Lancement du Bot](#🚀-lancement-du-bot)
+
+# 🧑‍💻 Commandes Discord
+
+Il possède à ce jour 5 commandes. Afin de les utiliser, il faudra placer le rôle OTKR Guardian au-dessus des rôles qu'il doit gérer dans vos paramètres de serveur :
+
+1. choosechannel : permet de sélectionner le salon unique où les commandes pourront être effectuées. Seul un administrateur peut utiliser cette commande :
+
+   ```
+   /choosechannel channel:#général
+   ```
+
+2. roleban : permet de bloquer l'ajout de rôle à une ou plusieurs personnes :
+
+      ```
+   /roleban 
+   ```
+
+3. roledeban : permet de débloquer un utilisateur si des rôles lui ont été bannis :
+
+    ```
+   /roledeban 
+   ```
+
+4. allroleban : permet d'enregistrer des rôles que personne ne doit posséder :
+
+    ```
+   /allroleban 
+   ```
+
+5. allroledeban : permet d’enlever les rôles bannis de la liste :
+
+    ```
+   /allroledeban 
+   ```
+
+6. exemptrole : permet d'exempter certains utilisateurs de la liste globale du serveur :
+
+    ```
+   /exemptrole 
+   ```
 
 # ⚙️ Prérequis
 
