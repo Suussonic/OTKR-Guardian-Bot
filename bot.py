@@ -100,7 +100,49 @@ async def roleban(interaction: discord.Interaction, member: discord.Member):  # 
     view = RoleSelectView(member)  # Crée une instance de la vue RoleSelectView
     await interaction.response.send_message(f"⚠️ Sélectionnez les rôles à retirer pour {member.mention} :", view=view)#, ephemeral=True)  Envoie le menu déroulant
 
-# 🚨 **Automatisation : Surveiller les rôles des membres**
+@bot.tree.command(name="roledeban", description="Supprime un rôle banni pour permettre à un membre de le récupérer.")
+@app_commands.describe(member="Membre du serveur")
+async def roledeban(interaction: discord.Interaction, member: discord.Member):
+    user_id = str(member.id)
+    
+    if user_id not in roles_to_remove or not roles_to_remove[user_id]:
+        await interaction.response.send_message(f"✅ {member.mention} n'a aucun rôle banni.")
+        return
+    
+    roles = [
+        discord.utils.get(member.guild.roles, id=int(role_id)) for role_id in roles_to_remove[user_id]
+    ]
+    options = [
+        discord.SelectOption(label=role.name, value=str(role.id)) for role in roles if role
+    ]
+    
+    class RoleDebanSelect(discord.ui.Select):
+        def __init__(self):
+            super().__init__(
+                placeholder="Sélectionnez les rôles à débannir", min_values=1, max_values=len(options), options=options
+            )
+
+        async def callback(self, interaction: discord.Interaction):
+            for role_id in self.values:
+                roles_to_remove[user_id].remove(role_id)  # Supprimer le rôle de la liste des bannis
+                if not roles_to_remove[user_id]:
+                    del roles_to_remove[user_id]  # Supprimer l'entrée si la liste est vide
+                save_data(roles_to_remove)  # Sauvegarder la mise à jour
+            
+            await interaction.response.send_message(
+                f"✅ Rôles débannis pour {member.mention} : {', '.join([role.name for role in roles if str(role.id) in self.values])}."
+            )
+    
+    class RoleDebanView(discord.ui.View):
+        def __init__(self):
+            super().__init__()
+            self.add_item(RoleDebanSelect())
+    
+    await interaction.response.send_message(
+        f"⚠️ Sélectionnez les rôles à débannir pour {member.mention} :", view=RoleDebanView()
+    )
+
+
 @bot.event
 async def on_member_update(before: discord.Member, after: discord.Member):  # Détecte les changements de rôles des membres
     user_id = str(after.id)
