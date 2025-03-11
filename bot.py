@@ -86,9 +86,9 @@ class RoleSelectView(discord.ui.View):
         super().__init__()
         self.add_item(RoleSelect(member))  # Ajoute l'élément RoleSelect à la vue
 
-@bot.tree.command(name="bakugo", description="Sélectionnez un membre et les rôles à lui retirer")
+@bot.tree.command(name="roleban", description="Sélectionnez un membre et les rôles à lui retirer")
 @app_commands.describe(member="Membre du serveur")
-async def bakugo(interaction: discord.Interaction, member: discord.Member):  # Commande slash pour retirer des rôles
+async def roleban(interaction: discord.Interaction, member: discord.Member):  # Commande slash pour retirer des rôles
     if member == interaction.user:  # Vérifie si l'utilisateur tente de se retirer ses propres rôles
         await interaction.response.send_message("❌ Vous ne pouvez pas vous retirer des rôles vous-même.", ephemeral=True)
         return
