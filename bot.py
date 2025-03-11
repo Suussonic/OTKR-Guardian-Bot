@@ -6,6 +6,7 @@ from discord import app_commands  # Importation des commandes d'application Disc
 from dotenv import load_dotenv  # Importation de dotenv pour charger les variables d'environnement
 
 load_dotenv()  # Chargement des variables d'environnement depuis un fichier .env
+AUTHORIZED_CHANNEL_ID = int(os.getenv("SALON_TOKEN"))  # Convertit en entier
 
 # Fichier JSON pour stocker les rôles interdits
 data_file = "roles_to_remove.json"
@@ -28,6 +29,12 @@ roles_to_remove = load_data()
 intents = discord.Intents.default()  # Active les intentions par défaut du bot
 intents.members = True  # Active la détection des mises à jour des membres
 bot = commands.Bot(command_prefix="!", intents=intents)  # Création du bot avec un préfixe "!"
+
+async def check_channel(interaction: discord.Interaction):
+    if interaction.channel.id != AUTHORIZED_CHANNEL_ID:
+        await interaction.response.send_message("❌ Cette commande ne peut être utilisée que dans le salon autorisé.")#, ephemeral=True) ephemeral permet de rendre ce message privée
+        return False
+    return True
 
 @bot.event
 async def on_ready():  # Événement déclenché lorsque le bot est prêt
@@ -76,7 +83,7 @@ class RoleSelect(discord.ui.Select):
 
         if removed_roles:  # Vérifie si des rôles ont été supprimés
             await interaction.response.send_message(
-                f"🔴 Rôles supprimés : {', '.join(removed_roles)} pour {self.member.mention}."#, ephemeral=True)  # Envoie un message de confirmation et ephemeral permet de rendre ce message privée
+                f"🔴 Rôles supprimés : {', '.join(removed_roles)} pour {self.member.mention}."#, ephemeral=True)  # Envoie un message de confirmation
             )
         else:
             await interaction.response.send_message("Aucun rôle n'a été retiré.")#, ephemeral=True)  # Envoie un message si aucun rôle n'a été supprimé
@@ -89,8 +96,11 @@ class RoleSelectView(discord.ui.View):
 @bot.tree.command(name="roleban", description="Sélectionnez un membre et les rôles à lui retirer")
 @app_commands.describe(member="Membre du serveur")
 async def roleban(interaction: discord.Interaction, member: discord.Member):  # Commande slash pour retirer des rôles
+    if not await check_channel(interaction):  # Vérifie si la commande est utilisée dans le bon salon
+        return
+
     if member == interaction.user:  # Vérifie si l'utilisateur tente de se retirer ses propres rôles
-        await interaction.response.send_message("❌ Vous ne pouvez pas vous retirer des rôles vous-même.")#, ephemeral=True)
+        await interaction.response.send_message("❌ Vous ne pouvez pas vous retirer des rôles vous-même.", ephemeral=True)
         return
 
     if member == interaction.guild.owner:  # Vérifie si la cible est le propriétaire du serveur
@@ -103,6 +113,8 @@ async def roleban(interaction: discord.Interaction, member: discord.Member):  # 
 @bot.tree.command(name="roledeban", description="Supprime un rôle banni pour permettre à un membre de le récupérer.")
 @app_commands.describe(member="Membre du serveur")
 async def roledeban(interaction: discord.Interaction, member: discord.Member):
+    if not await check_channel(interaction):  # Vérifie si la commande est utilisée dans le bon salon
+        return
     user_id = str(member.id)
     
     if user_id not in roles_to_remove or not roles_to_remove[user_id]:
