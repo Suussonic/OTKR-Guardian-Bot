@@ -63,10 +63,11 @@ Tout d'abord, votre Bot Discord doit être sur la plateforme Discord Dev :
 
 # 🔒 .env
 
-Dans le même dossier que votre code Python, il vous faudra ajouter un fichier .env qui contiendra en lui les données sensibles, ici le Token du Bot. Pour ce projet, vous allez entrer :
+Dans le même dossier que votre code Python, il vous faudra ajouter un fichier .env qui contiendra en lui les données sensibles, ici le Token du Bot et l'identifiant du salon ou vous voulez que les commandes soit utilisé. Pour ce projet, vous allez entrer :
 
 ```bash
    DISCORD_TOKEN="Votre token, attention à ne pas mettre de guillemets ou d'espace après le signe ="
+   SALON_TOKEN="Votre token, attention à ne pas mettre de guillemets ou d'espace après le signe ="
 ```
 
 # 🚀 Lancement du Bot
