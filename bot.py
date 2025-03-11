@@ -31,8 +31,11 @@ intents.members = True  # Active la détection des mises à jour des membres
 bot = commands.Bot(command_prefix="!", intents=intents)  # Création du bot avec un préfixe "!"
 
 async def check_channel(interaction: discord.Interaction):
-    if interaction.channel.id != AUTHORIZED_CHANNEL_ID:
-        await interaction.response.send_message("❌ Cette commande ne peut être utilisée que dans le salon autorisé.")#, ephemeral=True) ephemeral permet de rendre ce message privée
+    server_id = str(interaction.guild.id)
+    authorized_channel_id = roles_to_remove.get(server_id, {}).get("authorized_channel")
+    
+    if not authorized_channel_id or interaction.channel.id != int(authorized_channel_id):
+        await interaction.response.send_message("❌ Cette commande ne peut être utilisée que dans le salon autorisé.")
         return False
     return True
 
@@ -92,86 +95,102 @@ class RoleSelectView(discord.ui.View):
     def __init__(self, member: discord.Member):
         super().__init__()
         self.add_item(RoleSelect(member))  # Ajoute l'élément RoleSelect à la vue
+        
+@bot.tree.command(name="choosechannel", description="Définit le salon autorisé pour les commandes du bot.")
+@app_commands.checks.has_permissions(administrator=True)
+async def choosechannel(interaction: discord.Interaction, channel: discord.TextChannel):
+    server_id = str(interaction.guild.id)
+    
+    if server_id not in roles_to_remove:
+        roles_to_remove[server_id] = {"authorized_channel": str(channel.id), "banned_roles": {}}
+    else:
+        roles_to_remove[server_id]["authorized_channel"] = str(channel.id)
+    
+    save_data(roles_to_remove)
+    await interaction.response.send_message(f"✅ Le salon autorisé a été défini sur {channel.mention}.")
 
-@bot.tree.command(name="roleban", description="Sélectionnez un membre et les rôles à lui retirer")
-@app_commands.describe(member="Membre du serveur")
-async def roleban(interaction: discord.Interaction, member: discord.Member):  # Commande slash pour retirer des rôles
-    if not await check_channel(interaction):  # Vérifie si la commande est utilisée dans le bon salon
+@choosechannel.error
+async def choosechannel_error(interaction: discord.Interaction, error):
+    if isinstance(error, app_commands.errors.MissingPermissions):
+        await interaction.response.send_message("❌ Vous devez être administrateur pour utiliser cette commande.")#, ephemeral=True)
+
+# Bannir un rôle pour un membre du serveur
+@bot.tree.command(name="roleban", description="Bannit un rôle pour un membre du serveur.")
+@app_commands.describe(member="Membre du serveur", role="Rôle à bannir")
+async def roleban(interaction: discord.Interaction, member: discord.Member, role: discord.Role):
+    if not await check_channel(interaction):
         return
-
-    if member == interaction.user:  # Vérifie si l'utilisateur tente de se retirer ses propres rôles
-        await interaction.response.send_message("❌ Vous ne pouvez pas vous retirer des rôles vous-même.", ephemeral=True)
-        return
-
-    if member == interaction.guild.owner:  # Vérifie si la cible est le propriétaire du serveur
-        await interaction.response.send_message("❌ Impossible de modifier les rôles du propriétaire du serveur.")#, ephemeral=True)
-        return
-
-    view = RoleSelectView(member)  # Crée une instance de la vue RoleSelectView
-    await interaction.response.send_message(f"⚠️ Sélectionnez les rôles à retirer pour {member.mention} :", view=view)#, ephemeral=True)  Envoie le menu déroulant
-
-@bot.tree.command(name="roledeban", description="Supprime un rôle banni pour permettre à un membre de le récupérer.")
-@app_commands.describe(member="Membre du serveur")
-async def roledeban(interaction: discord.Interaction, member: discord.Member):
-    if not await check_channel(interaction):  # Vérifie si la commande est utilisée dans le bon salon
-        return
+    
+    server_id = str(interaction.guild.id)
     user_id = str(member.id)
+    role_id = str(role.id)
     
-    if user_id not in roles_to_remove or not roles_to_remove[user_id]:
-        await interaction.response.send_message(f"✅ {member.mention} n'a aucun rôle banni.")
+    if server_id not in roles_to_remove:
+        roles_to_remove[server_id] = {"authorized_channel": "", "banned_roles": {}}
+    if user_id not in roles_to_remove[server_id]["banned_roles"]:
+        roles_to_remove[server_id]["banned_roles"][user_id] = []
+    if role_id not in roles_to_remove[server_id]["banned_roles"][user_id]:
+        roles_to_remove[server_id]["banned_roles"][user_id].append(role_id)
+    
+    save_data(roles_to_remove)
+    await interaction.response.send_message(f"🔴 Le rôle {role.name} a été interdit pour {member.mention}.")
+
+# Débannir un rôle d'un membre
+@bot.tree.command(name="roledeban", description="Supprime un rôle banni d'un membre.")
+@app_commands.describe(member="Membre du serveur", role="Rôle à débannir")
+async def roledeban(interaction: discord.Interaction, member: discord.Member, role: discord.Role):
+    if not await check_channel(interaction):
         return
     
-    roles = [
-        discord.utils.get(member.guild.roles, id=int(role_id)) for role_id in roles_to_remove[user_id]
-    ]
-    options = [
-        discord.SelectOption(label=role.name, value=str(role.id)) for role in roles if role
-    ]
+    server_id = str(interaction.guild.id)
+    user_id = str(member.id)
+    role_id = str(role.id)
     
-    class RoleDebanSelect(discord.ui.Select):
-        def __init__(self):
-            super().__init__(
-                placeholder="Sélectionnez les rôles à débannir", min_values=1, max_values=len(options), options=options
-            )
-
-        async def callback(self, interaction: discord.Interaction):
-            for role_id in self.values:
-                roles_to_remove[user_id].remove(role_id)  # Supprimer le rôle de la liste des bannis
-                if not roles_to_remove[user_id]:
-                    del roles_to_remove[user_id]  # Supprimer l'entrée si la liste est vide
-                save_data(roles_to_remove)  # Sauvegarder la mise à jour
-            
-            await interaction.response.send_message(
-                f"✅ Rôles débannis pour {member.mention} : {', '.join([role.name for role in roles if str(role.id) in self.values])}."
-            )
+    if server_id in roles_to_remove and user_id in roles_to_remove[server_id]["banned_roles"]:
+        if role_id in roles_to_remove[server_id]["banned_roles"][user_id]:
+            roles_to_remove[server_id]["banned_roles"][user_id].remove(role_id)
+            if not roles_to_remove[server_id]["banned_roles"][user_id]:
+                del roles_to_remove[server_id]["banned_roles"][user_id]
+            save_data(roles_to_remove)
+            await interaction.response.send_message(f"✅ Le rôle {role.name} a été débanni pour {member.mention}.")
+            return
     
-    class RoleDebanView(discord.ui.View):
-        def __init__(self):
-            super().__init__()
-            self.add_item(RoleDebanSelect())
-    
-    await interaction.response.send_message(
-        f"⚠️ Sélectionnez les rôles à débannir pour {member.mention} :", view=RoleDebanView()
-    )
+    await interaction.response.send_message(f"❌ {member.mention} n'a pas ce rôle en tant que rôle interdit.")
 
 
 @bot.event
-async def on_member_update(before: discord.Member, after: discord.Member):  # Détecte les changements de rôles des membres
+async def on_member_update(before: discord.Member, after: discord.Member):
+    server_id = str(after.guild.id)
     user_id = str(after.id)
 
-    if user_id in roles_to_remove:  # Vérifie si le membre a des rôles interdits
-        removed_roles = []
-        for role_id in roles_to_remove[user_id]:
+    if server_id not in roles_to_remove:
+        return
+
+    removed_roles = []
+
+    # Vérifier les rôles interdits spécifiques à l'utilisateur
+    if "banned_roles" in roles_to_remove[server_id]:
+        if user_id in roles_to_remove[server_id]["banned_roles"]:
+            for role_id in roles_to_remove[server_id]["banned_roles"][user_id]:
+                role = discord.utils.get(after.guild.roles, id=int(role_id))
+                if role and role in after.roles and role not in before.roles:
+                    await after.remove_roles(role)
+                    removed_roles.append(role.name)
+
+    # Vérifier les rôles interdits globalement pour tous les nouveaux membres
+    if "global_banned_roles" in roles_to_remove[server_id]:
+        for role_id in roles_to_remove[server_id]["global_banned_roles"]:
             role = discord.utils.get(after.guild.roles, id=int(role_id))
-            if role and role in after.roles:  # Vérifie si le membre a récupéré un rôle interdit
-                await after.remove_roles(role)  # Retire le rôle interdit
+            if role and role in after.roles and role not in before.roles:
+                await after.remove_roles(role)
                 removed_roles.append(role.name)
 
-        if removed_roles:
-            print(f"🔴 {after.name} a récupéré un rôle interdit ({', '.join(removed_roles)}) => Supprimé immédiatement.")  # Affiche un message de suppression
-            try:
-                await after.send(f"🚨 Attention {after.mention}, les rôles suivants sont interdits : {', '.join(removed_roles)}. Ils ont été supprimés automatiquement.")  # Envoie un message au membre
-            except:
-                print(f"Impossible d'envoyer un MP à {after.name}.")  # Affiche une erreur si l'envoi du message échoue
+    if removed_roles:
+        print(f"🔴 {after.name} a reçu des rôles interdits : {', '.join(removed_roles)} (supprimés)")
+        try:
+            await after.send(f"🚨 Attention {after.mention}, les rôles suivants sont interdits sur ce serveur et ont été retirés automatiquement : {', '.join(removed_roles)}.")
+        except:
+            print(f"Impossible d'envoyer un MP à {after.name}.")
+
 
 bot.run(os.getenv('DISCORD_TOKEN'))  # Démarre le bot avec le token stocké dans les variables d'environnement
