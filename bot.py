@@ -172,18 +172,24 @@ async def roleban(interaction: discord.Interaction):
 # Débannir un rôle d'un membre
 class RoleDebanMemberSelect(Select):
     def __init__(self, guild: discord.Guild):
-        options = [discord.SelectOption(label=member.display_name, value=str(member.id)) for member in guild.members if not member.bot]
-        super().__init__(placeholder="Sélectionnez les membres", min_values=1, max_values=len(options), options=options)
+        options = [
+            discord.SelectOption(label=member.display_name, value=str(member.id)) 
+            for member in guild.members if not member.bot
+        ]
+        super().__init__(placeholder="Sélectionnez les membres", min_values=1, max_values=min(len(options), 25), options=options)
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
         view = RoleDebanRoleSelectView(interaction.guild, self.values)
-        await interaction.followup.send("🔽 Sélectionnez les rôles à débannir :", view=view)#, ephemeral=True)
+        await interaction.followup.send("🔽 Sélectionnez les rôles à débannir :", view=view)
 
 class RoleDebanRoleSelect(Select):
     def __init__(self, guild: discord.Guild, selected_members: list):
-        options = [discord.SelectOption(label=role.name, value=str(role.id)) for role in guild.roles]
-        super().__init__(placeholder="Sélectionnez les rôles à débannir", min_values=1, max_values=len(options))#, options=options)
+        options = [
+            discord.SelectOption(label=role.name, value=str(role.id)) 
+            for role in guild.roles if not role.is_default()
+        ]
+        super().__init__(placeholder="Sélectionnez les rôles à débannir", min_values=1, max_values=min(len(options), 25), options=options)
         self.selected_members = selected_members
 
     async def callback(self, interaction: discord.Interaction):
@@ -199,7 +205,8 @@ class RoleDebanRoleSelect(Select):
                         removed_roles.append(discord.utils.get(interaction.guild.roles, id=int(role_id)).name)
 
         save_data(roles_to_remove)
-        await interaction.response.send_message(f"✅ Rôles débannis : {', '.join(removed_roles)} pour les membres sélectionnés.")#, ephemeral=True)
+        message = f"✅ Rôles débannis : {', '.join(removed_roles)} pour les membres sélectionnés." if removed_roles else "❌ Aucun rôle à débannir."
+        await interaction.response.send_message(message)
 
 class RoleDebanRoleSelectView(View):
     def __init__(self, guild: discord.Guild, selected_members: list):
@@ -214,7 +221,7 @@ class RoleDebanMemberView(View):
 @bot.tree.command(name="roledeban", description="Débannit plusieurs rôles pour plusieurs membres.")
 async def roledeban(interaction: discord.Interaction):
     view = RoleDebanMemberView(interaction.guild)
-    await interaction.response.send_message("🔽 Sélectionnez les membres :", view=view)#, ephemeral=True)
+    await interaction.response.send_message("🔽 Sélectionnez les membres :", view=view)
 
 
 ##########################################################################################################################################################################################
