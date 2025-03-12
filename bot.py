@@ -100,6 +100,9 @@ class RoleSelectView(discord.ui.View):
 @bot.tree.command(name="choosechannel", description="Définit le salon autorisé pour les commandes du bot.")
 @app_commands.checks.has_permissions(administrator=True)
 async def choosechannel(interaction: discord.Interaction, channel: discord.TextChannel):
+    if not await check_channel(interaction):
+        return  # Stoppe l'exécution si le salon n'est pas autorisé
+
     server_id = str(interaction.guild.id)
     
     if server_id not in roles_to_remove:
@@ -109,6 +112,7 @@ async def choosechannel(interaction: discord.Interaction, channel: discord.TextC
     
     save_data(roles_to_remove)
     await interaction.response.send_message(f"✅ Le salon autorisé a été défini sur {channel.mention}.")
+
 
 @choosechannel.error
 async def choosechannel_error(interaction: discord.Interaction, error):
@@ -164,8 +168,12 @@ class RoleBanMemberView(View):
 
 @bot.tree.command(name="roleban", description="Bannit plusieurs rôles pour plusieurs membres.")
 async def roleban(interaction: discord.Interaction):
+    if not await check_channel(interaction):
+        return  # Stoppe l'exécution si le salon n'est pas autorisé
+
     view = RoleBanMemberView(interaction.guild)
-    await interaction.response.send_message("🔽 Sélectionnez les membres :", view=view)#, ephemeral=True)
+    await interaction.response.send_message("🔽 Sélectionnez les membres :", view=view)
+
 
 ##########################################################################################################################################################################################
 
@@ -220,8 +228,12 @@ class RoleDebanMemberView(View):
 
 @bot.tree.command(name="roledeban", description="Débannit plusieurs rôles pour plusieurs membres.")
 async def roledeban(interaction: discord.Interaction):
+    if not await check_channel(interaction):
+        return
+
     view = RoleDebanMemberView(interaction.guild)
     await interaction.response.send_message("🔽 Sélectionnez les membres :", view=view)
+
 
 
 ##########################################################################################################################################################################################
@@ -262,7 +274,9 @@ async def allroleban(interaction: discord.Interaction):
         return
 
     view = AllRoleBanView(interaction.guild)
-    await interaction.response.send_message("🔽 Sélectionnez les rôles à bannir globalement :", view=view)#, ephemeral=True)
+    await interaction.response.send_message("🔽 Sélectionnez les rôles à bannir globalement :", view=view)
+
+
 
 ##########################################################################################################################################################################################
         
@@ -308,7 +322,7 @@ async def allroledeban(interaction: discord.Interaction):
         return
 
     view = AllRoleDebanView(interaction.guild)
-    await interaction.response.send_message("🔽 Sélectionnez les rôles à débannir globalement :", view=view)#, ephemeral=True)
+    await interaction.response.send_message("🔽 Sélectionnez les rôles à débannir globalement :", view=view)
 
 
 ##########################################################################################################################################################################################
@@ -359,9 +373,11 @@ class ExemptMemberView(View):
 
 @bot.tree.command(name="exemptrole", description="Exempte plusieurs membres des restrictions de rôle.")
 async def exemptrole(interaction: discord.Interaction):
-    view = ExemptMemberView(interaction.guild)
-    await interaction.response.send_message("🔽 Sélectionnez les membres :", view=view)#, ephemeral=True)
+    if not await check_channel(interaction):
+        return
 
+    view = ExemptMemberView(interaction.guild)
+    await interaction.response.send_message("🔽 Sélectionnez les membres à exempter :", view=view)
 
 
 ##########################################################################################################################################################################################
