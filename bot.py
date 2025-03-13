@@ -415,10 +415,6 @@ async def on_member_update(before: discord.Member, after: discord.Member):
 
     if removed_roles:
         print(f"🔴 {after.name} a reçu des rôles interdits : {', '.join(removed_roles)} (supprimés)")
-        try:
-            await after.send(f"🚨 Attention {after.mention}, les rôles suivants sont interdits sur ce serveur et ont été retirés automatiquement : {', '.join(removed_roles)}.")
-        except:
-            print(f"Impossible d'envoyer un MP à {after.name}.")
 
 
 
