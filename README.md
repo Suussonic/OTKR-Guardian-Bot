@@ -2,6 +2,8 @@
 
 Ce bot Discord a vu le jour pour pouvoir gérer principalement les rôles des utilisateurs compliqués.
 
+Ajouter le Bot sur son Serveur Discord : https://discord.com/oauth2/authorize?client_id=1348523515690881104
+
 ## 📜 Sommaire
 - [Commande Discord](#🧑‍💻-commandes-discord)
 - [Prérequis](#⚙️-prérequis)
