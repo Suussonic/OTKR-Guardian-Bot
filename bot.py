@@ -100,9 +100,6 @@ class RoleSelectView(discord.ui.View):
 @bot.tree.command(name="choosechannel", description="Définit le salon autorisé pour les commandes du bot.")
 @app_commands.checks.has_permissions(administrator=True)
 async def choosechannel(interaction: discord.Interaction, channel: discord.TextChannel):
-    if not await check_channel(interaction):
-        return  # Stoppe l'exécution si le salon n'est pas autorisé
-
     server_id = str(interaction.guild.id)
     
     if server_id not in roles_to_remove:
@@ -120,6 +117,32 @@ async def choosechannel_error(interaction: discord.Interaction, error):
         await interaction.response.send_message("❌ Vous devez être administrateur pour utiliser cette commande.")#, ephemeral=True)
 
 ##########################################################################################################################################################################################
+
+@bot.tree.command(name="alertadmin", description="Définit les administrateurs à notifier en cas d'expulsion du bot.")
+@app_commands.checks.has_permissions(administrator=True)
+async def alertadmin(interaction: discord.Interaction, members: discord.Member):
+    if not await check_channel(interaction):
+        return  # Stoppe l'exécution si le salon n'est pas autorisé
+    
+    server_id = str(interaction.guild.id)
+
+    if server_id not in roles_to_remove:
+        roles_to_remove[server_id] = {"alert_admins": []}
+
+    # Ajoute l'ID du membre à la liste des admins alertés
+    admin_id = str(members.id)
+    if admin_id not in roles_to_remove[server_id]["alert_admins"]:
+        roles_to_remove[server_id]["alert_admins"].append(admin_id)
+
+    save_data(roles_to_remove)  # Sauvegarde les changements
+
+    await interaction.response.send_message(
+        f"✅ {members.mention} sera notifié si le bot est expulsé du serveur."
+    )
+
+
+##########################################################################################################################################################################################
+
 
 # Bannir un rôle pour un membre du serveur
 class RoleBanMemberSelect(Select):
@@ -415,6 +438,22 @@ async def on_member_update(before: discord.Member, after: discord.Member):
 
     if removed_roles:
         print(f"🔴 {after.name} a reçu des rôles interdits : {', '.join(removed_roles)} (supprimés)")
+        
+@bot.event
+async def on_guild_remove(guild: discord.Guild):
+    server_id = str(guild.id)
+    
+    if server_id in roles_to_remove and "alert_admins" in roles_to_remove[server_id]:
+        admin_ids = roles_to_remove[server_id]["alert_admins"]
+        
+        for admin_id in admin_ids:
+            admin = bot.get_user(int(admin_id))
+            if admin:
+                try:
+                    await admin.send(f"🚨 Le bot a été expulsé du serveur {guild.name}.")
+                except discord.Forbidden:
+                    print(f"Impossible d'envoyer un MP à {admin.name}.")
+
 
 
 
