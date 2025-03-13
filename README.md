@@ -51,6 +51,12 @@ Il possède à ce jour 5 commandes. Afin de les utiliser, il faudra placer le r�
    /exemptrole 
    ```
 
+7. alertadmin : permet d'enregistrer des membres pour qu'il soit notifié lorsque le Bot est expluser (cette fonctionnalité ne marche que si les utilisateurs séléctionné sont présent sur un autre serveur ou le Bot est également présent) :
+
+    ```
+   /alertadmin 
+   ```
+
 # ⚙️ Prérequis
 
 1. Pour pouvoir utiliser le Bot, il vous faudra Python installé sur votre machine que vous pourrez retrouver ici :

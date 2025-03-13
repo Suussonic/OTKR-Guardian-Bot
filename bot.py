@@ -442,19 +442,23 @@ async def on_member_update(before: discord.Member, after: discord.Member):
 @bot.event
 async def on_guild_remove(guild: discord.Guild):
     server_id = str(guild.id)
-    
+
     if server_id in roles_to_remove and "alert_admins" in roles_to_remove[server_id]:
         admin_ids = roles_to_remove[server_id]["alert_admins"]
-        
+
         for admin_id in admin_ids:
-            admin = bot.get_user(int(admin_id))
-            if admin:
-                try:
+            try:
+                admin = await bot.fetch_user(int(admin_id))  # Assurez-vous d'utiliser await ici
+                if admin is not None:
                     await admin.send(f"🚨 Le bot a été expulsé du serveur {guild.name}.")
-                except discord.Forbidden:
-                    print(f"Impossible d'envoyer un MP à {admin.name}.")
-
-
+                else:
+                    print(f"⚠️ Impossible de trouver l'utilisateur {admin_id}.")
+            except discord.Forbidden:
+                print(f"⚠️ Impossible d'envoyer un MP à {admin_id} (DM désactivés ou bot bloqué).")
+            except discord.HTTPException as e:
+                print(f"⚠️ Erreur HTTP en envoyant un MP à {admin_id}: {e}")
+            except Exception as e:
+                print(f"⚠️ Erreur inattendue avec {admin_id}: {e}")
 
 
 bot.run(os.getenv('DISCORD_TOKEN'))  # Démarre le bot avec le token stocké dans les variables d'environnement
