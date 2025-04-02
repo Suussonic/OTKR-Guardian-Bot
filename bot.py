@@ -101,15 +101,22 @@ class RoleSelectView(discord.ui.View):
 @app_commands.checks.has_permissions(administrator=True)
 async def choosechannel(interaction: discord.Interaction, channel: discord.TextChannel):
     server_id = str(interaction.guild.id)
-    
+    authorized_channel_id = roles_to_remove.get(server_id, {}).get("authorized_channel")
+
+    # Vérifie si un salon autorisé est déjà défini
+    if authorized_channel_id and interaction.channel.id != int(authorized_channel_id):
+        await interaction.response.send_message(
+            f"❌ Cette commande ne peut être utilisée que dans le salon autorisé : <#{authorized_channel_id}>."
+        )
+        return
+
     if server_id not in roles_to_remove:
         roles_to_remove[server_id] = {"authorized_channel": str(channel.id), "banned_roles": {}}
     else:
         roles_to_remove[server_id]["authorized_channel"] = str(channel.id)
-    
+
     save_data(roles_to_remove)
     await interaction.response.send_message(f"✅ Le salon autorisé a été défini sur {channel.mention}.")
-
 
 @choosechannel.error
 async def choosechannel_error(interaction: discord.Interaction, error):
