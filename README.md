@@ -2,7 +2,7 @@
 
 Ce bot Discord a vu le jour pour pouvoir gérer principalement les rôles des utilisateurs compliqués.
 
-Vidéo Youtube : https://youtu.be/Epnb3bLP4p8
+[![YouTube](https://img.shields.io/badge/YouTube-%23FF0000.svg?logo=YouTube&logoColor=white)](https://youtu.be/Epnb3bLP4p8)
 
 ## 📜 Sommaire
 - [Commande Discord](#🧑‍💻-commandes-discord)
