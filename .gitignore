@@ -1,8 +1,21 @@
-# Ignorer le dossier botdiscord
-botdiscord/
-
-# Ignorer le fichier .env
+# Environment variables and local secrets
 .env
+.env.*
+!.env.example
 
-# Ignorer tous les fichiers JSON
-*.json
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+
+# Runtime data and local build output
+data/*.json
+.dist/
+*.log
+
+# Legacy local folder
+botdiscord/

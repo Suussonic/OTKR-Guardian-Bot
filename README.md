@@ -120,8 +120,21 @@ Dans le même dossier que votre code Python, il vous faudra ajouter un fichier .
 
 # 🚀 Lancement du Bot
 
-Pour lancer le bot, vous allez devoir entrer cette commande dans le terminal :
+Pour lancer le bot, vous allez devoir entrer cette commande dans le terminal, depuis la racine du projet :
 
    ```bash
- python "nom du fichier python".py
+ python main.py
  ```
+
+Une fois lancé, une console interactive est disponible dans le terminal pour piloter le bot (tapez `help` pour voir la liste des commandes : lister les serveurs, les rôles, les membres, ou donner un rôle à quelqu'un).
+
+# 📂 Structure du projet
+
+```
+main.py               # Point d'entrée : démarre le bot
+core/                  # Configuration, instance du bot, stockage, console interactive
+events/                # Gestion des événements Discord (on_ready, on_member_update, ...)
+commands/              # Une commande slash (ou un groupe de commandes liées) par fichier
+data/                  # Données persistées (roles_to_remove.json)
+```
+
