@@ -2,6 +2,7 @@
 import asyncio
 
 from core.client import bot
+from core.console_permissions import _print_role_permissions, _set_role_permission
 
 HELP_TEXT = (
     "\n📖 Commandes disponibles :\n"
@@ -9,6 +10,8 @@ HELP_TEXT = (
     "  roles <server_id>                          - Liste les rôles d'un serveur\n"
     "  users <server_id>                          - Liste les membres d'un serveur\n"
     "  giverole <server_id> <user_id> <role_id>   - Donne un rôle à un membre\n"
+    "  roleperms <server_id> <role_id>            - Liste les permissions d'un rôle\n"
+    "  setperm <server_id> <role_id> <perm> <on|off> - Modifie une permission d'un rôle\n"
     "  help                                        - Affiche cette aide\n"
     "  exit                                        - Ferme la console (le bot continue de tourner)\n"
 )
@@ -112,6 +115,10 @@ async def run_console() -> None:
                 _print_members(args)
             elif command == "giverole":
                 await _give_role(args)
+            elif command == "roleperms":
+                _print_role_permissions(args)
+            elif command == "setperm":
+                await _set_role_permission(args)
             elif command in ("exit", "quit"):
                 print("👋 Fermeture de la console (le bot continue de tourner).")
                 break
